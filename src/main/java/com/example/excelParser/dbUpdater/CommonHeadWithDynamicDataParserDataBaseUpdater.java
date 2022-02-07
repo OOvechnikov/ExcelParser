@@ -1,36 +1,34 @@
-package com.example.excelParser.repository;
+package com.example.excelParser.dbUpdater;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import com.example.excelParser.excel.parsers.CommonHeadWithDynamicDataParser;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-@Repository
-public class ApplicationRepository implements DataBaseUpdater {
+public class CommonHeadWithDynamicDataParserDataBaseUpdater implements DataBaseUpdater {
 
     private static final String MAIN_TABLE_NAME = "orders";
     private static final String TOTAL_TABLE_NAME = "total_by_day";
     private static final SimpleDateFormat SDF = new SimpleDateFormat("yyyy-MM-dd");
     private static final StringBuilder SB_MAIN = new StringBuilder();
     private static final StringBuilder SB_HELPER = new StringBuilder();
+
     private final JdbcTemplate jdbcTemplate;
+    private final CommonHeadWithDynamicDataParser commonHeadWithDynamicDataParser;
 
-
-    @Autowired
-    public ApplicationRepository(JdbcTemplate jdbcTemplate) {
+    public CommonHeadWithDynamicDataParserDataBaseUpdater(JdbcTemplate jdbcTemplate, CommonHeadWithDynamicDataParser commonHeadWithDynamicDataParser) {
         this.jdbcTemplate = jdbcTemplate;
+        this.commonHeadWithDynamicDataParser = commonHeadWithDynamicDataParser;
     }
-
 
     @Override
     @Transactional
-    public void saveDataToDb(String[] headCommonData, String[] headDynamicData, Object[][] bodyData) throws DataAccessException {
-        createTables(headCommonData, headDynamicData);
-        fillTables(headDynamicData, bodyData);
+    public void saveDataToDb() throws DataAccessException {
+        createTables(commonHeadWithDynamicDataParser.getHeadCommonData(), commonHeadWithDynamicDataParser.getHeadDynamicData());
+        fillTables(commonHeadWithDynamicDataParser.getHeadDynamicData(), commonHeadWithDynamicDataParser.getBodyData());
     }
 
 
@@ -50,7 +48,6 @@ public class ApplicationRepository implements DataBaseUpdater {
         jdbcTemplate.execute(sql);
     }
 
-
     private void fillTables(String[] headDynamicData, Object[][] bodyData) throws DataAccessException {
         String sql =
                 "INSERT INTO " + MAIN_TABLE_NAME + " " +
@@ -64,7 +61,6 @@ public class ApplicationRepository implements DataBaseUpdater {
                 "GROUP BY date";
         jdbcTemplate.update(sql);
     }
-
 
     private String sqlMainHeadCommonPart(String[] headCommonData) {
         SB_MAIN.delete(0, SB_MAIN.length());

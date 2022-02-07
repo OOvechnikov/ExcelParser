@@ -10,7 +10,7 @@ public class ParserFactory {
 
     public Parser build(ParserType type) throws IllegalArgumentException, EmptyBookException {
         switch (type) {
-            case COMMON_HEAD_WITH_DYNAMIC_DATA_PARSER: return new CommonHeadWithDynamicDataParser();
+            case COMMON_HEAD_WITH_DYNAMIC_DATA_PARSER: return new CommonHeadWithDynamicDataParser(type);
 
             default: throw new IllegalArgumentException(String.format("Parser with type %s doesn't exist", type));
         }

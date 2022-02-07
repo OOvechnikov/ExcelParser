@@ -1,5 +1,6 @@
 package com.example.excelParser.excel.parsers;
 
+import com.example.excelParser.excel.ParserType;
 import com.example.excelParser.exception.BeforeParseException;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
@@ -15,6 +16,11 @@ public class CommonHeadWithDynamicDataParser extends Parser {
     private String[] headCommonData;
     private String[] headDynamicData;
     private int dateColumnNumber;
+
+
+    public CommonHeadWithDynamicDataParser(ParserType type) {
+        super(type);
+    }
 
 
     @Override

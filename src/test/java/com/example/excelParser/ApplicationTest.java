@@ -1,18 +1,18 @@
 package com.example.excelParser;
 
+import com.example.excelParser.dbUpdater.DbUpdaterFactory;
 import com.example.excelParser.dto.ExDTO;
 import com.example.excelParser.dto.ExDTO1;
 import com.example.excelParser.dto.ExDTO2;
 import com.example.excelParser.excel.ExcelImporter;
 import com.example.excelParser.excel.ParserFactory;
 import com.example.excelParser.excel.ParserType;
-import com.example.excelParser.excel.parsers.CommonHeadWithDynamicDataParser;
+import com.example.excelParser.excel.parsers.Parser;
 import com.example.excelParser.exception.BeforeParseException;
 import com.example.excelParser.exception.EmptyBookException;
 import com.example.excelParser.mapper.ExRowMapper;
 import com.example.excelParser.mapper.ExRowMapper1;
 import com.example.excelParser.mapper.ExRowMapper2;
-import com.example.excelParser.repository.DataBaseUpdater;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -30,16 +30,18 @@ import static org.junit.jupiter.api.Assertions.*;
 @TestPropertySource("/application-test.properties")
 class ApplicationTest {
 
-    private final JdbcTemplate jdbcTemplate;
     private final ParserFactory parserFactory;
-    private final DataBaseUpdater dataBaseUpdater;
+    private final DbUpdaterFactory dbUpdaterFactory;
+    private final JdbcTemplate jdbcTemplate;
+
 
     @Autowired
-    public ApplicationTest(JdbcTemplate jdbcTemplate, ParserFactory parserFactory, DataBaseUpdater dataBaseUpdater) {
-        this.jdbcTemplate = jdbcTemplate;
+    public ApplicationTest(ParserFactory parserFactory, DbUpdaterFactory dbUpdaterFactory, JdbcTemplate jdbcTemplate) {
         this.parserFactory = parserFactory;
-        this.dataBaseUpdater = dataBaseUpdater;
+        this.dbUpdaterFactory = dbUpdaterFactory;
+        this.jdbcTemplate = jdbcTemplate;
     }
+
 
     @AfterEach
     void tearDown() {
@@ -77,26 +79,24 @@ class ApplicationTest {
     void getDataBeforeParseTest() {
         BeforeParseException ex = assertThrows(BeforeParseException.class,
                 () -> {
-                    CommonHeadWithDynamicDataParser parser =
-                            (CommonHeadWithDynamicDataParser) parserFactory.build(ParserType.COMMON_HEAD_WITH_DYNAMIC_DATA_PARSER);
-                    dataBaseUpdater.saveDataToDb(parser.getHeadCommonData(), parser.getHeadDynamicData(), parser.getBodyData());
+                    Parser parser = parserFactory.build(ParserType.COMMON_HEAD_WITH_DYNAMIC_DATA_PARSER);
+                    dbUpdaterFactory.build(parser).saveDataToDb();
                 });
-
         assertEquals("Must to call 'configure' and 'parse' methods before", ex.getMessage());
     }
 
     @Test
     void givenFileTest() {
         XSSFWorkbook workbook = ExcelImporter.importExcelFile("src/test/resources/excel/Ex.xlsx");
-        CommonHeadWithDynamicDataParser parser;
+        Parser parser;
         try {
-            parser = (CommonHeadWithDynamicDataParser) parserFactory.build(ParserType.COMMON_HEAD_WITH_DYNAMIC_DATA_PARSER);
+            parser = parserFactory.build(ParserType.COMMON_HEAD_WITH_DYNAMIC_DATA_PARSER);
             parser.configureWithValidation(new String[] {"id", "date", "company"}, 2).parse(workbook);
         } catch (IllegalArgumentException | EmptyBookException e) {
             System.out.println(e.getMessage());
             return;
         }
-        dataBaseUpdater.saveDataToDb(parser.getHeadCommonData(), parser.getHeadDynamicData(), parser.getBodyData());
+        dbUpdaterFactory.build(parser).saveDataToDb();
 
         String sql = "SELECT * FROM orders";
         List<ExDTO> list = jdbcTemplate.query(sql, new ExRowMapper());
@@ -110,15 +110,15 @@ class ApplicationTest {
     @Test
     void extendedHeadDataTest() {
         XSSFWorkbook workbook = ExcelImporter.importExcelFile("src/test/resources/excel/Ex2.xlsx");
-        CommonHeadWithDynamicDataParser parser;
+        Parser parser;
         try {
-            parser = (CommonHeadWithDynamicDataParser) parserFactory.build(ParserType.COMMON_HEAD_WITH_DYNAMIC_DATA_PARSER);
+            parser = parserFactory.build(ParserType.COMMON_HEAD_WITH_DYNAMIC_DATA_PARSER);
             parser.configureWithValidation(new String[] {"id", "date", "company"}, 2).parse(workbook);
         } catch (IllegalArgumentException | EmptyBookException e) {
             System.out.println(e.getMessage());
             return;
         }
-        dataBaseUpdater.saveDataToDb(parser.getHeadCommonData(), parser.getHeadDynamicData(), parser.getBodyData());
+        dbUpdaterFactory.build(parser).saveDataToDb();
 
         String sql = "SELECT * FROM orders";
         List<ExDTO2> list = jdbcTemplate.query(sql, new ExRowMapper2());
@@ -133,15 +133,15 @@ class ApplicationTest {
     @Test
     void extendedCommonHeadTest() {
         XSSFWorkbook workbook = ExcelImporter.importExcelFile("src/test/resources/excel/Ex1.xlsx");
-        CommonHeadWithDynamicDataParser parser;
+        Parser parser;
         try {
-            parser = (CommonHeadWithDynamicDataParser) parserFactory.build(ParserType.COMMON_HEAD_WITH_DYNAMIC_DATA_PARSER);
+            parser = parserFactory.build(ParserType.COMMON_HEAD_WITH_DYNAMIC_DATA_PARSER);
             parser.configureWithValidation(new String[] {"id", "date", "company", "city"}, 2).parse(workbook);
         } catch (IllegalArgumentException | EmptyBookException e) {
             System.out.println(e.getMessage());
             return;
         }
-        dataBaseUpdater.saveDataToDb(parser.getHeadCommonData(), parser.getHeadDynamicData(), parser.getBodyData());
+        dbUpdaterFactory.build(parser).saveDataToDb();
 
         String sql = "SELECT * FROM orders";
         List<ExDTO1> list = jdbcTemplate.query(sql, new ExRowMapper1());
