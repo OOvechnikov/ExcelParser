@@ -26,9 +26,6 @@ public class Terminal implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-//        XSSFWorkbook workbook = ExcelImporter.importExcelFile("src/test/resources/excel/Ex2.xlsx");
-//        Parser parser = parserFactory.build(ParserType.COMMON_HEAD_WITH_DYNAMIC_DATA_PARSER);
-//        parser.configureWithValidation(new String[] {"id", "date" , "company"}, 2).parse(workbook);
-//        dbUpdaterFactory.build(parser).saveDataToDb();
+
     }
 }
