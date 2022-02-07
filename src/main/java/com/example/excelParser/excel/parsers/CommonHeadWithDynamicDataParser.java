@@ -36,11 +36,11 @@ public class CommonHeadWithDynamicDataParser extends Parser {
     }
 
     @Override
-    public CommonHeadWithDynamicDataParser configureWithValidation(Object... args) {
+    public CommonHeadWithDynamicDataParser configureWithValidation(Object... args) throws IllegalArgumentException {
         if (args.length != 2 ||
             !(args[0] instanceof String[] && args[1] instanceof Integer)) {
             throw new IllegalArgumentException("Args must be String[] (table head data) and int (date column number)");
-        }  else if (Arrays.stream((String[]) args[0]).noneMatch(d -> d.equals("id") || d.equals("date")) ||
+        }  else if (Arrays.stream((String[]) args[0]).filter(d -> d.equals("id") || d.equals("date")).count() != 2 ||
                     (int) args[1] < 0) {
             throw new IllegalArgumentException("Table head data must contains 'id' and 'date' columns; date column number must be > 0");
         }

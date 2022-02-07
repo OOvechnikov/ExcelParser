@@ -5,7 +5,6 @@ import com.example.excelParser.excel.ExcelImporter;
 import com.example.excelParser.excel.ParserFactory;
 import com.example.excelParser.excel.ParserType;
 import com.example.excelParser.excel.parsers.Parser;
-import com.example.excelParser.exception.EmptyBookException;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -28,14 +27,8 @@ public class Terminal implements CommandLineRunner {
     @Override
     public void run(String... args) {
 //        XSSFWorkbook workbook = ExcelImporter.importExcelFile("src/test/resources/excel/Ex2.xlsx");
-//        Parser parser;
-//        try {
-//            parser = parserFactory.build(ParserType.COMMON_HEAD_WITH_DYNAMIC_DATA_PARSER);
-//            parser.configureWithValidation(new String[] {"id", "date", "company"}, 2).parse(workbook);
-//        } catch (IllegalArgumentException | EmptyBookException e) {
-//            System.out.println(e.getMessage());
-//            return;
-//        }
+//        Parser parser = parserFactory.build(ParserType.COMMON_HEAD_WITH_DYNAMIC_DATA_PARSER);
+//        parser.configureWithValidation(new String[] {"id", "date" , "company"}, 2).parse(workbook);
 //        dbUpdaterFactory.build(parser).saveDataToDb();
     }
 }

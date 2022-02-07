@@ -88,14 +88,8 @@ class ApplicationTest {
     @Test
     void givenFileTest() {
         XSSFWorkbook workbook = ExcelImporter.importExcelFile("src/test/resources/excel/Ex.xlsx");
-        Parser parser;
-        try {
-            parser = parserFactory.build(ParserType.COMMON_HEAD_WITH_DYNAMIC_DATA_PARSER);
-            parser.configureWithValidation(new String[] {"id", "date", "company"}, 2).parse(workbook);
-        } catch (IllegalArgumentException | EmptyBookException e) {
-            System.out.println(e.getMessage());
-            return;
-        }
+        Parser parser = parserFactory.build(ParserType.COMMON_HEAD_WITH_DYNAMIC_DATA_PARSER);
+        parser.configureWithValidation(new String[] {"id", "date", "company"}, 2).parse(workbook);
         dbUpdaterFactory.build(parser).saveDataToDb();
 
         String sql = "SELECT * FROM orders";
@@ -110,14 +104,8 @@ class ApplicationTest {
     @Test
     void extendedHeadDataTest() {
         XSSFWorkbook workbook = ExcelImporter.importExcelFile("src/test/resources/excel/Ex2.xlsx");
-        Parser parser;
-        try {
-            parser = parserFactory.build(ParserType.COMMON_HEAD_WITH_DYNAMIC_DATA_PARSER);
-            parser.configureWithValidation(new String[] {"id", "date", "company"}, 2).parse(workbook);
-        } catch (IllegalArgumentException | EmptyBookException e) {
-            System.out.println(e.getMessage());
-            return;
-        }
+        Parser parser = parserFactory.build(ParserType.COMMON_HEAD_WITH_DYNAMIC_DATA_PARSER);
+        parser.configureWithValidation(new String[] {"id", "date", "company"}, 2).parse(workbook);
         dbUpdaterFactory.build(parser).saveDataToDb();
 
         String sql = "SELECT * FROM orders";
@@ -133,14 +121,8 @@ class ApplicationTest {
     @Test
     void extendedCommonHeadTest() {
         XSSFWorkbook workbook = ExcelImporter.importExcelFile("src/test/resources/excel/Ex1.xlsx");
-        Parser parser;
-        try {
-            parser = parserFactory.build(ParserType.COMMON_HEAD_WITH_DYNAMIC_DATA_PARSER);
-            parser.configureWithValidation(new String[] {"id", "date", "company", "city"}, 2).parse(workbook);
-        } catch (IllegalArgumentException | EmptyBookException e) {
-            System.out.println(e.getMessage());
-            return;
-        }
+        Parser parser = parserFactory.build(ParserType.COMMON_HEAD_WITH_DYNAMIC_DATA_PARSER);
+        parser.configureWithValidation(new String[] {"id", "date", "company", "city"}, 2).parse(workbook);
         dbUpdaterFactory.build(parser).saveDataToDb();
 
         String sql = "SELECT * FROM orders";
