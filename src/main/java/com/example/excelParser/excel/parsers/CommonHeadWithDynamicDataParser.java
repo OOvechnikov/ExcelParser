@@ -12,11 +12,11 @@ import java.util.Arrays;
 
 public class CommonHeadWithDynamicDataParser extends Parser {
     private static final String ID = "id";
+    private static final String BPE_MESSAGE = "Must to call 'configure' and 'parse' methods before";
 
     private String[] headCommonData;
     private String[] headDynamicData;
-    private int dateColumnNumber;
-
+    private int idColumnNumber;
 
     public CommonHeadWithDynamicDataParser(ParserType type) {
         super(type);
@@ -37,28 +37,32 @@ public class CommonHeadWithDynamicDataParser extends Parser {
 
     @Override
     public CommonHeadWithDynamicDataParser configureWithValidation(Object... args) throws IllegalArgumentException {
-        if (args.length != 2 ||
-            !(args[0] instanceof String[] && args[1] instanceof Integer)) {
-            throw new IllegalArgumentException("Args must be String[] (table head data) and int (date column number)");
-        }  else if (Arrays.stream((String[]) args[0]).filter(d -> d.equals("id") || d.equals("date")).count() != 2 ||
-                    (int) args[1] < 0) {
-            throw new IllegalArgumentException("Table head data must contains 'id' and 'date' columns; date column number must be > 0");
+        boolean isArgsStrings = Arrays.stream(args).allMatch(a -> a instanceof String);
+        if (!isArgsStrings) {
+            throw new IllegalArgumentException("All arguments must be String. Describe table common head data");
+        } else if (Arrays.stream(args).filter(s -> s.equals(ID)).count() != 1) {
+            throw new IllegalArgumentException(String.format("Table common head data must contains one '%s' column", ID));
         }
-        headCommonData = (String[]) args[0];
-        dateColumnNumber = (int) args[1];
+        headCommonData = Arrays.asList(args).toArray(new String[args.length]);
+        for (int i = 0; i < headCommonData.length; i++) {
+            if (headCommonData[i].equals("id")) {
+                idColumnNumber = i;
+                break;
+            }
+        }
         return this;
     }
 
     public String[] getHeadCommonData() throws BeforeParseException {
         if (headCommonData == null) {
-            throw new BeforeParseException("Must to call 'configure' and 'parse' methods before");
+            throw new BeforeParseException(BPE_MESSAGE);
         }
         return headCommonData;
     }
 
     public String[] getHeadDynamicData() throws BeforeParseException {
         if (headDynamicData == null) {
-            throw new BeforeParseException("Must to call 'configure' and 'parse' methods before");
+            throw new BeforeParseException(BPE_MESSAGE);
         }
         return headDynamicData;
     }
@@ -66,7 +70,7 @@ public class CommonHeadWithDynamicDataParser extends Parser {
     @Override
     public Object[][] getBodyData() throws BeforeParseException {
         if (bodyData == null) {
-            throw new BeforeParseException("Must to call 'configure' and 'parse' methods before");
+            throw new BeforeParseException(BPE_MESSAGE);
         }
         return bodyData;
     }
@@ -74,7 +78,7 @@ public class CommonHeadWithDynamicDataParser extends Parser {
     @Override
     public Object[][] getHeadData() throws BeforeParseException {
         if (headData == null) {
-            throw new BeforeParseException("Must to call 'configure' and 'parse' methods before");
+            throw new BeforeParseException(BPE_MESSAGE);
         }
         return headData;
     }
@@ -106,9 +110,11 @@ public class CommonHeadWithDynamicDataParser extends Parser {
             Row row = sheet.getRow(i);
             for (int j = 0; j < tableColumnQty; j++) {
                 Cell cell = row.getCell(j);
-                if (j == dateColumnNumber - 1) {
-                    data[i - headRowQty][j] = cell.getDateCellValue();
-                } else if (j > dateColumnNumber - 1 && j < headCommonData.length) {
+                if (j < headCommonData.length) {
+                    if (j == idColumnNumber) {
+                        data[i - headRowQty][j] = cell.getNumericCellValue();
+                        continue;
+                    }
                     data[i - headRowQty][j] = cell.getStringCellValue();
                 } else {
                     data[i - headRowQty][j] = cell.getNumericCellValue();

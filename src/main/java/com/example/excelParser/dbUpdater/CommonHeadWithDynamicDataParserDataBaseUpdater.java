@@ -1,5 +1,6 @@
 package com.example.excelParser.dbUpdater;
 
+import com.example.excelParser.dbUpdater.dateCreator.DateCreator;
 import com.example.excelParser.excel.parsers.CommonHeadWithDynamicDataParser;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -18,10 +19,16 @@ public class CommonHeadWithDynamicDataParserDataBaseUpdater implements DataBaseU
 
     private final JdbcTemplate jdbcTemplate;
     private final CommonHeadWithDynamicDataParser commonHeadWithDynamicDataParser;
+    private final DateCreator dateCreator;
+    private final int dateColumnNumber;
 
-    public CommonHeadWithDynamicDataParserDataBaseUpdater(JdbcTemplate jdbcTemplate, CommonHeadWithDynamicDataParser commonHeadWithDynamicDataParser) {
+    public CommonHeadWithDynamicDataParserDataBaseUpdater(JdbcTemplate jdbcTemplate,
+                                                          CommonHeadWithDynamicDataParser commonHeadWithDynamicDataParser,
+                                                          DateCreator dateCreator) {
         this.jdbcTemplate = jdbcTemplate;
         this.commonHeadWithDynamicDataParser = commonHeadWithDynamicDataParser;
+        this.dateCreator = dateCreator;
+        dateColumnNumber = commonHeadWithDynamicDataParser.getHeadCommonData().length;
     }
 
     @Override
@@ -67,12 +74,11 @@ public class CommonHeadWithDynamicDataParserDataBaseUpdater implements DataBaseU
         for (String s : headCommonData) {
             if (s.equals("id")) {
                 SB_MAIN.append("id INT8 PRIMARY KEY, ");
-            } else if (s.equals("date")) {
-                SB_MAIN.append("date DATE NOT NULL, ");
             } else {
                 SB_MAIN.append(s).append(" VARCHAR(256) NOT NULL, ");
             }
         }
+        SB_MAIN.append("date DATE NOT NULL, ");
         return SB_MAIN.toString();
     }
 
@@ -104,6 +110,9 @@ public class CommonHeadWithDynamicDataParserDataBaseUpdater implements DataBaseU
     private String getValuesAsStringFromArray(Object[][] data, int i) {
         SB_HELPER.delete(0, SB_HELPER.length());
         for (int j = 0; j < data[i].length; j++) {
+            if (j == dateColumnNumber) {
+                SB_HELPER.append(convertDataToString(dateCreator.createDate())).append(", ");
+            }
             SB_HELPER.append(convertDataToString(data[i][j])).append(", ");
         }
         return SB_HELPER.delete(SB_HELPER.length() - 2, SB_HELPER.length()).toString();

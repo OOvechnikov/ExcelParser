@@ -1,6 +1,7 @@
 package com.example.excelParser;
 
 import com.example.excelParser.dbUpdater.DbUpdaterFactory;
+import com.example.excelParser.dbUpdater.dateCreator.OneTwoThreeDateCreator;
 import com.example.excelParser.dto.ExDTO;
 import com.example.excelParser.dto.ExDTO1;
 import com.example.excelParser.dto.ExDTO2;
@@ -21,6 +22,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.TestPropertySource;
 
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -58,21 +61,24 @@ class ApplicationTest {
     }
 
     @Test
-    void wrongArgumentsOrderToParserTest() {
-        XSSFWorkbook workbook = ExcelImporter.importExcelFile("src/test/resources/excel/Ex.xlsx");
+    void wrongArgumentsToParserTest() {
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> parserFactory.build(ParserType.COMMON_HEAD_WITH_DYNAMIC_DATA_PARSER)
-                        .configureWithValidation(2, new String[] {}).parse(workbook));
-        assertEquals("Args must be String[] (table head data) and int (date column number)", ex.getMessage());
+                        .configureWithValidation("id", "company", 35));
+        assertEquals("All arguments must be String. Describe table common head data", ex.getMessage());
     }
 
     @Test
-    void argumentsWithoutIdAndDateToParserTest() {
+    void argumentsWithoutIdParserTest() {
         XSSFWorkbook workbook = ExcelImporter.importExcelFile("src/test/resources/excel/Ex.xlsx");
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> parserFactory.build(ParserType.COMMON_HEAD_WITH_DYNAMIC_DATA_PARSER)
-                        .configureWithValidation(new String[] {"one", "two", "three"}, 2).parse(workbook));
-        assertEquals("Table head data must contains 'id' and 'date' columns; date column number must be > 0", ex.getMessage());
+                        .configureWithValidation("one", "two", "three").parse(workbook));
+        assertEquals("Table common head data must contains one 'id' column", ex.getMessage());
+        ex = assertThrows(IllegalArgumentException.class,
+                () -> parserFactory.build(ParserType.COMMON_HEAD_WITH_DYNAMIC_DATA_PARSER)
+                        .configureWithValidation("id", "two", "id").parse(workbook));
+        assertEquals("Table common head data must contains one 'id' column", ex.getMessage());
     }
 
     @Test
@@ -80,7 +86,7 @@ class ApplicationTest {
         BeforeParseException ex = assertThrows(BeforeParseException.class,
                 () -> {
                     Parser parser = parserFactory.build(ParserType.COMMON_HEAD_WITH_DYNAMIC_DATA_PARSER);
-                    dbUpdaterFactory.build(parser).saveDataToDb();
+                    dbUpdaterFactory.build(parser, new OneTwoThreeDateCreator(2022, 1, 28)).saveDataToDb();
                 });
         assertEquals("Must to call 'configure' and 'parse' methods before", ex.getMessage());
     }
@@ -89,8 +95,8 @@ class ApplicationTest {
     void givenFileTest() {
         XSSFWorkbook workbook = ExcelImporter.importExcelFile("src/test/resources/excel/Ex.xlsx");
         Parser parser = parserFactory.build(ParserType.COMMON_HEAD_WITH_DYNAMIC_DATA_PARSER);
-        parser.configureWithValidation(new String[] {"id", "date", "company"}, 2).parse(workbook);
-        dbUpdaterFactory.build(parser).saveDataToDb();
+        parser.configureWithValidation("id", "company").parse(workbook);
+        dbUpdaterFactory.build(parser, new OneTwoThreeDateCreator(2022, 1, 28)).saveDataToDb();
 
         String sql = "SELECT * FROM orders";
         List<ExDTO> list = jdbcTemplate.query(sql, new ExRowMapper());
@@ -105,8 +111,8 @@ class ApplicationTest {
     void extendedHeadDataTest() {
         XSSFWorkbook workbook = ExcelImporter.importExcelFile("src/test/resources/excel/Ex2.xlsx");
         Parser parser = parserFactory.build(ParserType.COMMON_HEAD_WITH_DYNAMIC_DATA_PARSER);
-        parser.configureWithValidation(new String[] {"id", "date", "company"}, 2).parse(workbook);
-        dbUpdaterFactory.build(parser).saveDataToDb();
+        parser.configureWithValidation("id", "company").parse(workbook);
+        dbUpdaterFactory.build(parser, new OneTwoThreeDateCreator(2022, 1, 28)).saveDataToDb();
 
         String sql = "SELECT * FROM orders";
         List<ExDTO2> list = jdbcTemplate.query(sql, new ExRowMapper2());
@@ -122,8 +128,8 @@ class ApplicationTest {
     void extendedCommonHeadTest() {
         XSSFWorkbook workbook = ExcelImporter.importExcelFile("src/test/resources/excel/Ex1.xlsx");
         Parser parser = parserFactory.build(ParserType.COMMON_HEAD_WITH_DYNAMIC_DATA_PARSER);
-        parser.configureWithValidation(new String[] {"id", "date", "company", "city"}, 2).parse(workbook);
-        dbUpdaterFactory.build(parser).saveDataToDb();
+        parser.configureWithValidation("company", "city", "id").parse(workbook);
+        dbUpdaterFactory.build(parser, new OneTwoThreeDateCreator(2022, 1, 28)).saveDataToDb();
 
         String sql = "SELECT * FROM orders";
         List<ExDTO1> list = jdbcTemplate.query(sql, new ExRowMapper1());
@@ -133,5 +139,26 @@ class ApplicationTest {
         ExDTO1 ex18 = list.get(23);
         assertThat(ex18.getFactQoilData2() == (double) 63);
         assertThat(ex18.getForecastQoilData1() == (double) 130);
+    }
+
+    @Test
+    void OneTwoThreeDateCreatorTest() {
+        OneTwoThreeDateCreator creator = new OneTwoThreeDateCreator(2022, Calendar.FEBRUARY, 9);
+        assertEquals(new Date(122, 1, 9), creator.createDate());
+        assertEquals(new Date(122, 1, 10), creator.createDate());
+        assertEquals(new Date(122, 1, 11), creator.createDate());
+        assertEquals(new Date(122, 1, 9), creator.createDate());
+
+        creator = new OneTwoThreeDateCreator(2022, Calendar.FEBRUARY, 28);
+        assertEquals(new Date(122, 1, 28), creator.createDate());
+        assertEquals(new Date(122, 1, 1), creator.createDate());
+        assertEquals(new Date(122, 1, 2), creator.createDate());
+        assertEquals(new Date(122, 1, 28), creator.createDate());
+
+        creator = new OneTwoThreeDateCreator(2021, Calendar.DECEMBER, 31);
+        assertEquals(new Date(121, 11, 31), creator.createDate());
+        assertEquals(new Date(121, 11, 1), creator.createDate());
+        assertEquals(new Date(121, 11, 2), creator.createDate());
+        assertEquals(new Date(121, 11, 31), creator.createDate());
     }
 }

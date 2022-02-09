@@ -1,5 +1,6 @@
 package com.example.excelParser.dbUpdater;
 
+import com.example.excelParser.dbUpdater.dateCreator.DateCreator;
 import com.example.excelParser.excel.parsers.CommonHeadWithDynamicDataParser;
 import com.example.excelParser.excel.parsers.Parser;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,9 +17,9 @@ public class DbUpdaterFactory {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    public DataBaseUpdater build(Parser parser) {
+    public DataBaseUpdater build(Parser parser, DateCreator dateCreator) {
         switch (parser.getType()) {
-            case COMMON_HEAD_WITH_DYNAMIC_DATA_PARSER: return new CommonHeadWithDynamicDataParserDataBaseUpdater(jdbcTemplate, (CommonHeadWithDynamicDataParser) parser);
+            case COMMON_HEAD_WITH_DYNAMIC_DATA_PARSER: return new CommonHeadWithDynamicDataParserDataBaseUpdater(jdbcTemplate, (CommonHeadWithDynamicDataParser) parser, dateCreator);
 
             default: throw new IllegalArgumentException(String.format("Parser with type %s doesn't exist", parser.getType()));
         }
